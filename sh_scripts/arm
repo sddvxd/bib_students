@@ -1,0 +1,14 @@
+#!/bin/bash
+echo "Checking privileges..."
+if [ "$(whoami)" != 'root' ]
+then
+	echo "You need R00T!"
+	sudo arm
+	exit
+fi
+echo "Starting postgresql if dead..."
+if /etc/init.d/postgresql status | grep -q "dead"
+then
+	/etc/init.d/postgresql start
+fi
+armitage

